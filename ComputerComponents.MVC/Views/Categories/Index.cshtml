@@ -1,0 +1,139 @@
+@model IEnumerable<ComputerComponents.Domain.Entities.Category>
+@{
+    ViewData["Title"] = "إدارة الفئات والأقسام";
+}
+
+<div class="custom-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-extrabold text-white mb-1"><i class="fa-solid fa-layer-group text-info me-2"></i> قائمة الفئات والأقسام</h4>
+            <p class="text-muted small m-0 fw-bold">إدارة فئات أقسام قطع ومكونات الحاسوب الآلي</p>
+        </div>
+        <button class="btn btn-cyan" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+            <i class="fa-solid fa-plus me-1"></i> إضافة فئة جديدة
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom align-middle">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">#</th>
+                    <th>اسم الفئة</th>
+                    <th>الوصف</th>
+                    <th>عدد المكونات</th>
+                    <th style="width: 220px;" class="text-center">إجراءات التحكم</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    int index = 1;
+                    foreach (var cat in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold fs-6">@index</td>
+                            <td class="fw-bold fs-6">@cat.CategoryName</td>
+                            <td>@cat.Description</td>
+                            <td>
+                                <span class="badge bg-info text-dark font-weight-bold px-3 py-2 fs-6">
+                                    @(cat.Components?.Count ?? 0) عنصر
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-2">
+                                    <!-- Edit Button -->
+                                    <button type="button" class="btn btn-action-edit" title="تعديل الفئة"
+                                            onclick="openEditCategoryModal(@cat.Id, '@cat.CategoryName', '@cat.Description')">
+                                        <i class="fa-solid fa-pen-to-square me-1"></i> تعديل
+                                    </button>
+                                    <!-- Delete Button Form -->
+                                    <form action="/Categories/Delete" method="post" class="d-inline" onsubmit="return confirm('هل أنت تأكد من إزالة الفئة (@cat.CategoryName)؟');">
+                                        <input type="hidden" name="id" value="@cat.Id" />
+                                        <button type="submit" class="btn btn-action-delete" title="حذف الفئة">
+                                            <i class="fa-solid fa-trash me-1"></i> حذف
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        index++;
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="5" class="text-center text-white py-4 fs-5">لا توجد فئات حالياً. اضغط على زر (إضافة فئة جديدة) بالأعلى.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white fw-bold"><i class="fa-solid fa-plus text-info me-2"></i> إضافة فئة جديدة</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/Categories/Create" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">اسم الفئة</label>
+                        <input type="text" name="CategoryName" class="form-control" required placeholder="مثال: كروت الشاشة" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الوصف</label>
+                        <textarea name="Description" class="form-control" rows="3" placeholder="وصف مختصر للفئة..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-cyan">حفظ الفئة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white fw-bold"><i class="fa-solid fa-pen text-warning me-2"></i> تعديل بيانات الفئة</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/Categories/Edit" method="post">
+                <input type="hidden" id="editCatId" name="Id" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">اسم الفئة</label>
+                        <input type="text" id="editCatName" name="CategoryName" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الوصف</label>
+                        <textarea id="editCatDesc" name="Description" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-warning text-dark fw-extrabold">تحديث التعديلات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openEditCategoryModal(id, name, desc) {
+            document.getElementById('editCatId').value = id;
+            document.getElementById('editCatName').value = name;
+            document.getElementById('editCatDesc').value = desc;
+            var editModal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+            editModal.show();
+        }
+    </script>
+}

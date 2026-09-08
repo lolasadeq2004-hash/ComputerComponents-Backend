@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="ComputerComponents.API/ComputerComponents.API.csproj" />
+  <Project Path="ComputerComponents.Application/ComputerComponents.Application.csproj" />
+  <Project Path="ComputerComponents.Domain/ComputerComponents.Domain.csproj" />
+  <Project Path="ComputerComponents.Infrastructure/ComputerComponents.Infrastructure.csproj" />
+  <Project Path="ComputerComponents.MVC/ComputerComponents.MVC.csproj" />
+  <Project Path="ComputerComponents.Tests/ComputerComponents.Tests.csproj" />
+</Solution>

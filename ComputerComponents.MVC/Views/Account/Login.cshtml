@@ -1,0 +1,119 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تسجيل الدخول - نظام إدارة مكونات الحاسوب</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #0b0f19 0%, #1e1b4b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f8fafc;
+        }
+
+        .login-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .brand-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem auto;
+            box-shadow: 0 10px 20px rgba(14, 165, 233, 0.3);
+        }
+
+        .form-control {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border-radius: 12px;
+            padding: 12px 16px;
+        }
+
+        .form-control:focus {
+            background: rgba(15, 23, 42, 0.95);
+            border-color: #38bdf8;
+            color: #fff;
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15);
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 12px;
+            border-radius: 12px;
+            width: 100%;
+            margin-top: 1rem;
+            box-shadow: 0 10px 20px rgba(56, 189, 248, 0.25);
+            transition: transform 0.2s ease;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card text-center">
+        <div class="brand-icon">
+            <i class="fa-solid fa-microchip fa-2x text-white"></i>
+        </div>
+        <h3 class="fw-bold mb-1">تسجيل الدخول</h3>
+        <p class="text-muted mb-4">نظام إدارة مكونات الحاسوب (ASP.NET CORE 10)</p>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger border-0 bg-danger bg-opacity-25 text-danger py-2 text-center mb-3">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i> @ViewBag.Error
+            </div>
+        }
+
+        <form method="post" action="/Account/Login">
+            <div class="mb-3 text-start">
+                <label class="form-label text-muted small fw-bold">البريد الإلكتروني</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-envelope"></i></span>
+                    <input type="email" name="email" class="form-control" value="admin@system.com" required placeholder="name@example.com" />
+                </div>
+            </div>
+
+            <div class="mb-4 text-start">
+                <label class="form-label text-muted small fw-bold">كلمة المرور</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" name="password" class="form-control" value="admin" required placeholder="••••••••" />
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-login">
+                <i class="fa-solid fa-right-to-bracket me-2"></i> دخول النظام
+            </button>
+        </form>
+    </div>
+</body>
+</html>

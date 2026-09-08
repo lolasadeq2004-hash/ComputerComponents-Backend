@@ -1,0 +1,328 @@
+@model IEnumerable<ComputerComponents.Domain.Entities.Component>
+@{
+    ViewData["Title"] = "إدارة قطـع ومكونات الحاسوب";
+}
+
+<div class="custom-card mb-4">
+    <!-- Header with Live Sync Badge -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h4 class="fw-extrabold text-white m-0"><i class="fa-solid fa-desktop text-info me-2"></i> دليل قطع ومكونات النظام</h4>
+                <span class="badge bg-success bg-opacity-25 text-success border border-success px-3 py-1 rounded-pill d-inline-flex align-items-center gap-1">
+                    <span class="spinner-grow spinner-grow-sm text-success" style="width: 8px; height: 8px;" role="status"></span>
+                    متزامن ومباشر مع تطبيق الفلاتر (Flutter)
+                </span>
+            </div>
+            <p class="text-muted small m-0 fw-bold">إضافة وتعديل وحذف المكونات مع تحديث فوري في الويب وتطبيق الفلاتر</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-info fw-bold" onclick="location.reload()" title="تحديث يدوي">
+                <i class="fa-solid fa-rotate me-1"></i> تحديث فوري
+            </button>
+            <button class="btn btn-cyan" data-bs-toggle="modal" data-bs-target="#addComponentModal">
+                <i class="fa-solid fa-plus me-1"></i> إضافة مكون جديد
+            </button>
+        </div>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <form method="get" action="/Components/Index" class="row g-3 mb-4">
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-dark border-secondary text-info"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="text" name="search" class="form-control" placeholder="ابحث باسم المكون أو الموديل..." value="@ViewBag.SearchQuery" />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select name="categoryId" class="form-select" asp-items="ViewBag.Categories" onchange="this.form.submit()">
+                <option value="">-- جميع الفئات والأقسام --</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-secondary flex-grow-1 fw-bold"><i class="fa-solid fa-filter me-1"></i> فلترة</button>
+            @if (!string.IsNullOrEmpty(ViewBag.SearchQuery) || ViewBag.SelectedCategoryId != null)
+            {
+                <a href="/Components/Index" class="btn btn-outline-danger fw-bold" title="إلغاء الفلتر"><i class="fa-solid fa-xmark"></i></a>
+            }
+        </div>
+    </form>
+
+    <!-- Components Table -->
+    <div class="table-responsive">
+        <table class="table table-custom align-middle" id="componentsTable">
+            <thead>
+                <tr>
+                    <th style="width: 280px;">المكوّن والصورة</th>
+                    <th>الفئة</th>
+                    <th>الموديل</th>
+                    <th>السعر</th>
+                    <th>المواصفات الفنية</th>
+                    <th style="width: 200px;" class="text-center">إجراءات التحكم</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=400" : item.ImageUrl)" 
+                                         width="55" height="55" 
+                                         class="rounded-3 object-fit-cover border border-info shadow-sm bg-dark" 
+                                         alt="@item.ComponentName"
+                                         onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=400';" />
+                                    <div>
+                                        <h6 class="m-0 fw-extrabold text-dark">@item.ComponentName</h6>
+                                        <small class="text-primary font-weight-bold">ID: #@item.Id</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary text-white font-weight-bold px-3 py-2 fs-6">
+                                    @(item.Category?.CategoryName ?? "غير محدد")
+                                </span>
+                            </td>
+                            <td><code class="text-info fs-6 fw-bold bg-dark px-2 py-1 rounded">@item.Model</code></td>
+                            <td><span class="text-success fw-extrabold fs-5">$@item.Price.ToString("N2")</span></td>
+                            <td>
+                                @if (item.Specifications != null && item.Specifications.Any())
+                                {
+                                    foreach (var spec in item.Specifications.Take(2))
+                                    {
+                                        <span class="badge bg-dark border border-secondary text-white me-1 fs-6">
+                                            @spec.PropertyName: @spec.PropertyValue
+                                        </span>
+                                    }
+                                }
+                                else
+                                {
+                                    <small class="text-muted">مواصفات قياسية</small>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-2">
+                                    <!-- Edit Button -->
+                                    <button type="button" class="btn btn-action-edit" title="تعديل المكون"
+                                            onclick="openEditComponentModal(@item.Id, '@item.ComponentName', '@item.Model', @item.Price, '@item.ImageUrl', @item.CategoryId)">
+                                        <i class="fa-solid fa-pen-to-square me-1"></i> تعديل
+                                    </button>
+                                    <!-- Delete Button Form -->
+                                    <form action="/Components/Delete" method="post" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف المكوّن (@item.ComponentName)؟ سيتم حذفه أيضاً من تطبيق الفلاتر.');">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-action-delete" title="حذف المكون">
+                                            <i class="fa-solid fa-trash me-1"></i> حذف
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="6" class="text-center text-dark py-5 fs-5">لم يتم العثور على أي مكونات تطابق البحث. اضغط على زر (إضافة مكون جديد) للبدء.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Quick Image Preset Buttons definition -->
+@{
+    var presets = new Dictionary<string, string>
+    {
+        { "🎮 كرت شاشة RTX 4090", "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=500" },
+        { "🚀 معالج Intel i9", "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=500" },
+        { "⚡ رام 32GB RGB", "https://images.unsplash.com/photo-1562976540-1502c2145186?w=500" },
+        { "💾 قرص 2TB SSD NVMe", "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=500" },
+        { "🔌 لوحة أم Gaming", "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500" },
+        { "📦 كيس Case", "https://images.unsplash.com/photo-1587202372616-b43abea06c2a?w=500" }
+    };
+}
+
+<!-- Add Component Modal -->
+<div class="modal fade" id="addComponentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white fw-bold"><i class="fa-solid fa-plus text-info me-2"></i> إضافة مكوّن حاسوب جديد</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/Components/Create" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">اسم المكوّن (Component Name)</label>
+                        <input type="text" name="ComponentName" class="form-control" required placeholder="مثال: Nvidia GeForce RTX 4080 Super" />
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">رقم الموديل / Model</label>
+                            <input type="text" name="Model" class="form-control" required placeholder="RTX4080S-O16G" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">السعر بالدولار ($)</label>
+                            <input type="number" step="0.01" name="Price" class="form-control" required placeholder="999.99" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الفئة التابع لها</label>
+                        <select name="CategoryId" class="form-select" asp-items="ViewBag.Categories" required>
+                            <option value="">-- اختر الفئة --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">رابط صورة المكوّن (Image URL)</label>
+                        <input type="url" id="addCompImageUrl" name="ImageUrl" class="form-control" 
+                               value="https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=500" 
+                               oninput="updatePreview('addPreview', this.value)" 
+                               placeholder="https://images.unsplash.com/..." />
+                    </div>
+
+                    <!-- Quick Preset Badges -->
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-2 fw-bold">اختر صورة سريعة جاهزة بضغطة واحدة:</small>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var p in presets)
+                            {
+                                <button type="button" class="btn btn-outline-info btn-sm fw-bold" 
+                                        onclick="setImageUrl('addCompImageUrl', 'addPreview', '@p.Value')">
+                                    @p.Key
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Live Image Preview Box -->
+                    <div class="p-3 bg-dark rounded-3 border border-secondary text-center">
+                        <small class="text-muted d-block mb-2">معاينة الصورة المباشرة:</small>
+                        <img id="addPreview" src="https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=500" 
+                             style="max-height: 140px; border-radius: 10px;" 
+                             onerror="this.src='https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=400'" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-cyan"><i class="fa-solid fa-save me-1"></i> حفظ المكوّن ومزامنته</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Component Modal -->
+<div class="modal fade" id="editComponentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white fw-bold"><i class="fa-solid fa-pen text-warning me-2"></i> تعديل بيانات المكوّن</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/Components/Edit" method="post">
+                <input type="hidden" id="editCompId" name="Id" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">اسم المكوّن</label>
+                        <input type="text" id="editCompName" name="ComponentName" class="form-control" required />
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">الموديل</label>
+                            <input type="text" id="editCompModel" name="Model" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">السعر ($)</label>
+                            <input type="number" step="0.01" id="editCompPrice" name="Price" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الفئة</label>
+                        <select id="editCompCatId" name="CategoryId" class="form-select" asp-items="ViewBag.Categories" required>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">رابط الصورة</label>
+                        <input type="url" id="editCompImage" name="ImageUrl" class="form-control" 
+                               oninput="updatePreview('editPreview', this.value)" />
+                    </div>
+
+                    <!-- Quick Preset Badges -->
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-2 fw-bold">تغيير الصورة بسرعة:</small>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var p in presets)
+                            {
+                                <button type="button" class="btn btn-outline-info btn-sm fw-bold" 
+                                        onclick="setImageUrl('editCompImage', 'editPreview', '@p.Value')">
+                                    @p.Key
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Live Image Preview Box -->
+                    <div class="p-3 bg-dark rounded-3 border border-secondary text-center">
+                        <small class="text-muted d-block mb-2">معاينة الصورة المباشرة:</small>
+                        <img id="editPreview" src="" style="max-height: 140px; border-radius: 10px;" 
+                             onerror="this.src='https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=400'" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-warning text-dark fw-extrabold"><i class="fa-solid fa-check me-1"></i> تحديث المكوّن</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updatePreview(previewId, url) {
+            const img = document.getElementById(previewId);
+            if (img && url) {
+                img.src = url;
+            }
+        }
+
+        function setImageUrl(inputId, previewId, url) {
+            document.getElementById(inputId).value = url;
+            updatePreview(previewId, url);
+        }
+
+        function openEditComponentModal(id, name, model, price, image, catId) {
+            document.getElementById('editCompId').value = id;
+            document.getElementById('editCompName').value = name;
+            document.getElementById('editCompModel').value = model;
+            document.getElementById('editCompPrice').value = price;
+            document.getElementById('editCompImage').value = image || 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=500';
+            document.getElementById('editCompCatId').value = catId;
+            updatePreview('editPreview', image || 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=500');
+            var modal = new bootstrap.Modal(document.getElementById('editComponentModal'));
+            modal.show();
+        }
+
+        // Live Real-Time Polling Sync with Flutter/API
+        let lastComponentsCount = @(Model?.Count() ?? 0);
+        let syncBusy = false;
+        setInterval(async () => {
+            if (syncBusy) return;
+            syncBusy = true;
+            try {
+                const res = await fetch('/api/components');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.length !== lastComponentsCount) {
+                        lastComponentsCount = data.length;
+                        if (!document.querySelector('.modal.show')) {
+                            location.reload();
+                        }
+                    }
+                }
+            } catch (e) { }
+            finally { syncBusy = false; }
+        }, 10000);
+    </script>
+}
