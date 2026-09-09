@@ -22,3 +22,4 @@ bld/
 # Flutter Mobile (managed in independent repository)
 /computer_components_mobile/
 install_flutter.ps1
+Push_To_GitHub.bat
